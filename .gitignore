@@ -1,0 +1,12 @@
+# Java compilado
+*.class
+out/
+target/
+
+# Arquivos locais e temporarios
+*.log
+*.tmp
+.env
+
+# Configuracoes pessoais de IDE
+.idea/
