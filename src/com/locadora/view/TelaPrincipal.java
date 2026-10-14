@@ -2,6 +2,8 @@ package com.locadora.view;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -17,13 +19,14 @@ public class TelaPrincipal extends JFrame {
     private static final Color MUTED = new Color(100, 116, 139);
     private static final Color BACKGROUND = new Color(247, 249, 252);
 
-    private final DadosLocadora dados = new DadosLocadora();
+    private final DadosLocadora dados;
     private final CardLayout layoutTelas = new CardLayout();
     private final JPanel telas = new JPanel(layoutTelas);
     private final JLabel tituloTela = new JLabel("Dashboard");
     private final JLabel totalVeiculos = new JLabel("0");
     private final JLabel totalClientes = new JLabel("0");
     private final JLabel totalLocacoes = new JLabel("0");
+    private final JLabel faturamentoMes = new JLabel("R$ 0,00");
     private final List<JButton> botoesMenu = new ArrayList<>();
     private final Icon iconePainel;
     private final Icon iconeVeiculo;
@@ -37,7 +40,8 @@ public class TelaPrincipal extends JFrame {
     private TelaLocacoes telaLocacoes;
     private TelaRelatorios telaRelatorios;
 
-    public TelaPrincipal() {
+    public TelaPrincipal() throws IOException {
+        dados = new DadosLocadora();
         iconePainel = carregarIcone("painel.png", 20);
         iconeVeiculo = carregarIcone("carros.png", 32);
         iconeVeiculoMenu = carregarIcone("carros.png", 20);
@@ -48,7 +52,13 @@ public class TelaPrincipal extends JFrame {
 
         setTitle("Locadora de Veiculos - Dashboard");
         setSize(1150, 720);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent evento) {
+                salvarEFechar();
+            }
+        });
         setLocationRelativeTo(null);
 
         JPanel root = new JPanel(new BorderLayout());
@@ -97,7 +107,8 @@ public class TelaPrincipal extends JFrame {
         JButton sair = new JButton("Sair", new IconComFundo(iconeSair));
         sair.setIconTextGap(8);
         estilizarBotaoMenu(sair, false);
-        sair.addActionListener(evento -> System.exit(0));
+        sair.addActionListener(evento -> dispatchEvent(
+                new WindowEvent(this, WindowEvent.WINDOW_CLOSING)));
         menu.add(sair, BorderLayout.SOUTH);
         return menu;
     }
@@ -187,7 +198,8 @@ public class TelaPrincipal extends JFrame {
         cards.add(criarCard(iconeVeiculo, totalVeiculos, "Veiculos cadastrados", BLUE));
         cards.add(criarCard(iconeCliente, totalClientes, "Clientes cadastrados", new Color(42, 150, 88)));
         cards.add(criarCard(iconeLocacao, totalLocacoes, "Locacoes efetuadas", new Color(221, 145, 25)));
-        cards.add(criarCard("$", "R$ 0,00", "Faturamento (mes)", new Color(126, 70, 185)));
+        cards.add(criarCard(new JLabel("$", SwingConstants.CENTER), faturamentoMes,
+                "Faturamento (mes)", new Color(126, 70, 185)));
         painel.add(cards, BorderLayout.NORTH);
         return painel;
     }
@@ -256,6 +268,23 @@ public class TelaPrincipal extends JFrame {
         totalVeiculos.setText(String.valueOf(dados.getVeiculos().size()));
         totalClientes.setText(String.valueOf(dados.getClientes().size()));
         totalLocacoes.setText(String.valueOf(dados.getLocacoes().size()));
+        faturamentoMes.setText(ComponentesTela.formatarMoeda(
+                dados.calcularFaturamentoMes(java.time.YearMonth.now())));
+    }
+
+    private void salvarEFechar() {
+        try {
+            dados.salvar();
+            dispose();
+        } catch (IOException e) {
+            int resultado = JOptionPane.showConfirmDialog(this,
+                    "Nao foi possivel salvar os dados:\n" + e.getMessage()
+                            + "\n\nDeseja fechar mesmo assim? As alteracoes podem ser perdidas.",
+                    "Erro ao salvar dados", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
+            if (resultado == JOptionPane.YES_OPTION) {
+                dispose();
+            }
+        }
     }
 
     private Icon carregarIcone(String nomeArquivo, int tamanho) {
@@ -302,6 +331,14 @@ public class TelaPrincipal extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new TelaPrincipal().setVisible(true));
+        SwingUtilities.invokeLater(() -> {
+            try {
+                new TelaPrincipal().setVisible(true);
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(null,
+                        "Nao foi possivel carregar os dados salvos:\n" + e.getMessage(),
+                        "Erro ao iniciar", JOptionPane.ERROR_MESSAGE);
+            }
+        });
     }
 }

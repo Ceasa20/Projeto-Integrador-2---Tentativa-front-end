@@ -7,6 +7,9 @@ target/
 *.log
 *.tmp
 .env
+.env.*
+!.env.example
+dados-locadora.properties
 
 # Configuracoes pessoais de IDE
 .idea/

@@ -3,12 +3,14 @@ package com.locadora.view;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.math.BigDecimal;
 import com.locadora.DadosLocadora;
 
 public final class TelaVeiculos extends JPanel {
     private final DadosLocadora dados;
     private final JLabel resumo = ComponentesTela.criarResumo();
-    private final DefaultTableModel modelo = ComponentesTela.criarModelo("ID", "Marca", "Modelo", "Ano", "Placa");
+    private final DefaultTableModel modelo = ComponentesTela.criarModelo(
+            "ID", "Marca", "Modelo", "Ano", "Placa", "Diaria");
     private final JTable tabela = ComponentesTela.criarTabela(modelo);
 
     public TelaVeiculos(DadosLocadora dados, Runnable voltar) {
@@ -30,7 +32,8 @@ public final class TelaVeiculos extends JPanel {
         modelo.setRowCount(0);
         for (DadosLocadora.Veiculo veiculo : dados.getVeiculos()) {
             modelo.addRow(new Object[]{
-                    veiculo.getId(), veiculo.getMarca(), veiculo.getModelo(), veiculo.getAno(), veiculo.getPlaca()
+                    veiculo.getId(), veiculo.getMarca(), veiculo.getModelo(), veiculo.getAno(), veiculo.getPlaca(),
+                    ComponentesTela.formatarMoeda(veiculo.getValorDiaria())
             });
         }
         resumo.setText("Veiculos cadastrados: " + dados.getVeiculos().size());
@@ -38,15 +41,17 @@ public final class TelaVeiculos extends JPanel {
 
     private void cadastrar() {
         String[] valores = ComponentesTela.abrirFormulario(this, "Cadastrar veiculo",
-                new String[]{"Marca", "Modelo", "Ano", "Placa"}, null);
+                new String[]{"Marca", "Modelo", "Ano", "Placa", "Diaria (R$, sugestao 150,00)"},
+                new String[]{"", "", "", "", "150,00"});
         if (valores == null) {
             return;
         }
         try {
-            dados.cadastrarVeiculo(valores[0], valores[1], Integer.parseInt(valores[2]), valores[3]);
+            dados.cadastrarVeiculo(valores[0], valores[1], Integer.parseInt(valores[2]), valores[3],
+                    parseValorDiaria(valores[4]));
             atualizar();
         } catch (NumberFormatException e) {
-            ComponentesTela.mostrarErro(this, "O ano deve ser informado como numero.");
+            ComponentesTela.mostrarErro(this, "Informe um ano valido e a diaria no formato 150,00.");
         } catch (IllegalArgumentException e) {
             ComponentesTela.mostrarErro(this, e.getMessage());
         }
@@ -59,16 +64,18 @@ public final class TelaVeiculos extends JPanel {
             return;
         }
         String[] valores = ComponentesTela.abrirFormulario(this, "Alterar veiculo",
-                new String[]{"Marca", "Modelo", "Ano", "Placa"},
-                new String[]{veiculo.getMarca(), veiculo.getModelo(), String.valueOf(veiculo.getAno()), veiculo.getPlaca()});
+                new String[]{"Marca", "Modelo", "Ano", "Placa", "Diaria (R$)"},
+                new String[]{veiculo.getMarca(), veiculo.getModelo(), String.valueOf(veiculo.getAno()),
+                        veiculo.getPlaca(), veiculo.getValorDiaria().toPlainString().replace('.', ',')});
         if (valores == null) {
             return;
         }
         try {
-            dados.alterarVeiculo(veiculo, valores[0], valores[1], Integer.parseInt(valores[2]), valores[3]);
+            dados.alterarVeiculo(veiculo, valores[0], valores[1], Integer.parseInt(valores[2]), valores[3],
+                    parseValorDiaria(valores[4]));
             atualizar();
         } catch (NumberFormatException e) {
-            ComponentesTela.mostrarErro(this, "O ano deve ser informado como numero.");
+            ComponentesTela.mostrarErro(this, "Informe um ano valido e a diaria no formato 150,00.");
         } catch (IllegalArgumentException e) {
             ComponentesTela.mostrarErro(this, e.getMessage());
         }
@@ -94,5 +101,13 @@ public final class TelaVeiculos extends JPanel {
     private DadosLocadora.Veiculo selecionado() {
         int indice = tabela.getSelectedRow();
         return indice < 0 ? null : dados.getVeiculos().get(indice);
+    }
+
+    private BigDecimal parseValorDiaria(String valor) {
+        String normalizado = valor.trim().replace("R$", "").replace(" ", "");
+        if (normalizado.contains(",")) {
+            normalizado = normalizado.replace(".", "").replace(',', '.');
+        }
+        return new BigDecimal(normalizado);
     }
 }

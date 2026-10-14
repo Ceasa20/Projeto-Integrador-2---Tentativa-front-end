@@ -13,7 +13,7 @@ public final class TelaLocacoes extends JPanel {
     private final DadosLocadora dados;
     private final JLabel resumo = ComponentesTela.criarResumo();
     private final DefaultTableModel modelo = ComponentesTela.criarModelo(
-            "ID", "Cliente", "Veiculo", "Inicio", "Previsao de fim", "Status");
+            "ID", "Cliente", "Veiculo", "Inicio", "Previsao de fim", "Diaria", "Total previsto", "Status");
     private final JTable tabela = ComponentesTela.criarTabela(modelo);
 
     public TelaLocacoes(DadosLocadora dados, Runnable voltar) {
@@ -39,6 +39,8 @@ public final class TelaLocacoes extends JPanel {
                     locacao.getVeiculo().getModelo() + " - " + locacao.getVeiculo().getPlaca(),
                     FORMATO_DATA.format(locacao.getInicio()),
                     FORMATO_DATA.format(locacao.getFimPrevisto()),
+                    ComponentesTela.formatarMoeda(locacao.getValorDiaria()),
+                    ComponentesTela.formatarMoeda(locacao.getValorTotal()),
                     locacao.isAtiva() ? "Ativa" : "Finalizada"
             });
         }
@@ -62,6 +64,20 @@ public final class TelaLocacoes extends JPanel {
                 dados.getClientes().toArray(new DadosLocadora.Cliente[0]));
         JComboBox<DadosLocadora.Veiculo> veiculos = new JComboBox<>(
                 dados.getVeiculosDisponiveis().toArray(new DadosLocadora.Veiculo[0]));
+        veiculos.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(
+                    JList<?> lista, Object valor, int indice, boolean selecionado, boolean foco) {
+                JLabel rotulo = (JLabel) super.getListCellRendererComponent(
+                        lista, valor, indice, selecionado, foco);
+                if (valor instanceof DadosLocadora.Veiculo) {
+                    DadosLocadora.Veiculo veiculo = (DadosLocadora.Veiculo) valor;
+                    rotulo.setText(veiculo.getModelo() + " - " + veiculo.getPlaca() + " ("
+                            + ComponentesTela.formatarMoeda(veiculo.getValorDiaria()) + "/dia)");
+                }
+                return rotulo;
+            }
+        });
         JTextField inicio = new JTextField(FORMATO_DATA.format(LocalDate.now()), 12);
         JTextField fim = new JTextField(FORMATO_DATA.format(LocalDate.now().plusDays(1)), 12);
         JPanel formulario = new JPanel(new GridLayout(4, 2, 8, 8));
