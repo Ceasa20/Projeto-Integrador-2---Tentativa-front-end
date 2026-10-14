@@ -37,17 +37,11 @@ public final class TelaClientes extends JPanel {
     }
 
     private void cadastrar() {
-        String[] valores = ComponentesTela.abrirFormulario(this, "Cadastrar cliente",
-                new String[]{"Nome", "CPF", "Telefone", "E-mail"}, null);
-        if (valores == null) {
-            return;
-        }
-        try {
-            dados.cadastrarCliente(valores[0], valores[1], valores[2], valores[3]);
-            atualizar();
-        } catch (IllegalArgumentException e) {
-            ComponentesTela.mostrarErro(this, e.getMessage());
-        }
+        ComponentesTela.abrirFormularioComConfirmacao(this, "Cadastrar cliente",
+                new String[]{"Nome", "CPF", "Telefone", "E-mail"}, null, valores -> {
+                    dados.cadastrarCliente(valores[0], valores[1], valores[2], valores[3]);
+                    atualizar();
+                });
     }
 
     private void alterar() {
@@ -56,18 +50,13 @@ public final class TelaClientes extends JPanel {
             ComponentesTela.mostrarErro(this, "Selecione um cliente para alterar.");
             return;
         }
-        String[] valores = ComponentesTela.abrirFormulario(this, "Alterar cliente",
+        ComponentesTela.abrirFormularioComConfirmacao(this, "Alterar cliente",
                 new String[]{"Nome", "CPF", "Telefone", "E-mail"},
-                new String[]{cliente.getNome(), cliente.getCpf(), cliente.getTelefone(), cliente.getEmail()});
-        if (valores == null) {
-            return;
-        }
-        try {
-            dados.alterarCliente(cliente, valores[0], valores[1], valores[2], valores[3]);
-            atualizar();
-        } catch (IllegalArgumentException e) {
-            ComponentesTela.mostrarErro(this, e.getMessage());
-        }
+                new String[]{cliente.getNome(), cliente.getCpf(), cliente.getTelefone(), cliente.getEmail()},
+                valores -> {
+                    dados.alterarCliente(cliente, valores[0], valores[1], valores[2], valores[3]);
+                    atualizar();
+                });
     }
 
     private void excluir() {

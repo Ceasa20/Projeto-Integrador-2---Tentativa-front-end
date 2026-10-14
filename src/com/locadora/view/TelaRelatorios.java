@@ -12,7 +12,8 @@ public final class TelaRelatorios extends JPanel {
     private final DefaultTableModel modeloVeiculos = ComponentesTela.criarModelo("Modelo", "Locacoes");
     private final DefaultTableModel modeloClientes = ComponentesTela.criarModelo("ID cliente", "Cliente", "CPF", "Locacoes");
     private final DefaultTableModel modeloDetalhes = ComponentesTela.criarModelo(
-            "ID locacao", "ID cliente", "Cliente", "ID veiculo", "Veiculo", "Inicio", "Previsao de fim", "Status");
+            "ID locacao", "ID cliente", "Cliente", "ID veiculo", "Veiculo", "Inicio", "Previsao de fim",
+            "Diaria", "Total previsto", "Status");
 
     public TelaRelatorios(DadosLocadora dados, Runnable voltar) {
         this.dados = dados;
@@ -71,6 +72,8 @@ public final class TelaRelatorios extends JPanel {
                     veiculo.getMarca() + " " + veiculo.getModelo() + " - " + veiculo.getPlaca(),
                     locacao.getInicio(),
                     locacao.getFimPrevisto(),
+                    ComponentesTela.formatarMoeda(locacao.getValorDiaria()),
+                    ComponentesTela.formatarMoeda(locacao.getValorTotal()),
                     locacao.isAtiva() ? "Ativa" : "Finalizada"
             });
         }
